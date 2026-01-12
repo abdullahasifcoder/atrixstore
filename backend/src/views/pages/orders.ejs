@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - ATRIX Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('../partials/navbar', { user }) %>
+
+<div class="container my-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item active">My Orders</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <h1 class="mb-0" style="font-family: 'Playfair Display', serif;">
+            <i class="bi bi-bag-check me-2"></i>My Orders
+        </h1>
+        <a href="/shop" class="btn-premium btn-primary-premium">
+            <i class="bi bi-cart-plus me-2"></i>Continue Shopping
+        </a>
+    </div>
+
+    <% if (!orders || orders.length === 0) { %>
+        <!-- Empty State -->
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-bag-x display-1 text-muted"></i>
+            </div>
+            <h3 class="mb-3" style="font-family: 'Playfair Display', serif;">No Orders Yet</h3>
+            <p class="text-muted mb-4">You haven't placed any orders yet.<br>Start shopping to see your order history here!</p>
+            <a href="/shop" class="btn-premium btn-primary-premium">
+                <i class="bi bi-shop me-2"></i>Start Shopping
+            </a>
+        </div>
+    <% } else { %>
+        <div class="mb-4 text-muted">
+            <small><i class="bi bi-list-ul me-1"></i> Showing <%= orders.length %> order(s)</small>
+        </div>
+        
+        <% orders.forEach(function(order) { %>
+            <div class="order-card bg-white rounded-4 shadow-sm mb-4 overflow-hidden">
+                <!-- Order Header -->
+                <div class="order-header p-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                    <div class="row align-items-center g-3">
+                        <div class="col-md-3">
+                            <small class="text-muted d-block mb-1">Order Number</small>
+                            <strong class="fs-5">#<%= order.orderNumber || order.id %></strong>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block mb-1">Order Date</small>
+                            <span><%= new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block mb-1">Status</small>
+                            <% 
+                                const statusConfig = {
+                                    pending: { bg: 'bg-warning', text: 'text-dark', icon: 'bi-clock' },
+                                    processing: { bg: 'bg-info', text: 'text-white', icon: 'bi-gear' },
+                                    shipped: { bg: 'bg-primary', text: 'text-white', icon: 'bi-truck' },
+                                    delivered: { bg: 'bg-success', text: 'text-white', icon: 'bi-check-circle' },
+                                    cancelled: { bg: 'bg-danger', text: 'text-white', icon: 'bi-x-circle' },
+                                    refunded: { bg: 'bg-secondary', text: 'text-white', icon: 'bi-arrow-counterclockwise' }
+                                };
+                                const config = statusConfig[order.status] || { bg: 'bg-secondary', text: 'text-white', icon: 'bi-question-circle' };
+                            %>
+                            <span class="badge <%= config.bg %> <%= config.text %> px-3 py-2">
+                                <i class="<%= config.icon %> me-1"></i><%= order.status.toUpperCase() %>
+                            </span>
+                        </div>
+                        <div class="col-md-3 text-md-end">
+                            <small class="text-muted d-block mb-1">Total</small>
+                            <strong class="fs-4" style="color: var(--accent);">$<%= parseFloat(order.total).toFixed(2) %></strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Items -->
+                <div class="p-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-box-seam me-2"></i>Order Items</h6>
+                    <div class="order-items">
+                        <% if (order.orderItems && order.orderItems.length > 0) { %>
+                            <% order.orderItems.forEach(function(item) { %>
+                                <div class="d-flex align-items-center gap-3 py-3 border-bottom">
+                                    <% if (item.productImage || (item.product && item.product.imageUrl)) { %>
+                                        <img src="<%= item.productImage || item.product.imageUrl %>" 
+                                             alt="<%= item.productName || (item.product && item.product.name) %>" 
+                                             class="rounded-3" 
+                                             style="width: 60px; height: 60px; object-fit: cover;"
+                                             onerror="this.src='https://images.unsplash.com/photo-1560343090-f0409e92791a?w=100'">
+                                    <% } else { %>
+                                        <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                                            <i class="bi bi-image text-muted"></i>
+                                        </div>
+                                    <% } %>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1"><%= item.productName || (item.product && item.product.name) || 'Unknown Product' %></h6>
+                                        <small class="text-muted">Qty: <%= item.quantity %> × $<%= parseFloat(item.price).toFixed(2) %></small>
+                                    </div>
+                                    <div class="text-end">
+                                        <strong>$<%= (parseFloat(item.price) * item.quantity).toFixed(2) %></strong>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <p class="text-muted text-center py-3 mb-0">No items found</p>
+                        <% } %>
+                    </div>
+                </div>
+                
+                <!-- Order Details -->
+                <div class="p-4 bg-light">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-geo-alt me-2"></i>Shipping Address</h6>
+                            <p class="text-muted mb-0">
+                                <%= order.shippingAddress || 'N/A' %><br>
+                                <%= order.shippingCity || '' %><%= order.shippingCity && order.shippingState ? ', ' : '' %><%= order.shippingState || '' %> <%= order.shippingPostalCode || '' %><br>
+                                <%= order.shippingCountry || '' %>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-credit-card me-2"></i>Payment</h6>
+                            <p class="mb-2">
+                                <span class="badge <%= order.paymentStatus === 'paid' ? 'bg-success' : 'bg-warning text-dark' %> px-3 py-2">
+                                    <i class="<%= order.paymentStatus === 'paid' ? 'bi-check-circle' : 'bi-clock' %> me-1"></i>
+                                    <%= order.paymentStatus ? order.paymentStatus.toUpperCase() : 'PENDING' %>
+                                </span>
+                            </p>
+                            <small class="text-muted">Method: <%= order.paymentMethod || 'Stripe' %></small>
+                        </div>
+                    </div>
+                    
+                    <% if (order.trackingNumber) { %>
+                        <div class="mt-4 p-3 bg-white rounded-3 border">
+                            <i class="bi bi-truck text-primary me-2"></i>
+                            <strong>Tracking Number:</strong> 
+                            <span class="font-monospace"><%= order.trackingNumber %></span>
+                        </div>
+                    <% } %>
+                </div>
+                
+                <!-- Order Summary Footer -->
+                <div class="p-4 border-top">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="d-flex gap-4 text-muted small">
+                                <span>Subtotal: $<%= parseFloat(order.subtotal || 0).toFixed(2) %></span>
+                                <span>Tax: $<%= parseFloat(order.tax || 0).toFixed(2) %></span>
+                                <span>Shipping: $<%= parseFloat(order.shippingCost || 0).toFixed(2) %></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <span class="h5 mb-0 fw-bold" style="color: var(--accent);">
+                                Total: $<%= parseFloat(order.total).toFixed(2) %>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <% if (order.status === 'delivered') { %>
+                <!-- Review Prompt for Delivered Orders -->
+                <div class="review-prompt p-4 border-top" style="background: linear-gradient(135deg, #fef9e7 0%, #fff8e1 100%);">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="review-icon-pulse">
+                                <i class="bi bi-star-fill text-warning fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1 fw-bold">Share Your Experience!</h6>
+                                <p class="mb-0 text-muted small">Help others by reviewing the products you purchased</p>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <% if (order.orderItems && order.orderItems.length > 0) { %>
+                                <% order.orderItems.slice(0, 2).forEach(function(item) { %>
+                                    <% const productSlug = item.product ? item.product.slug : null; %>
+                                    <% if (productSlug) { %>
+                                    <a href="/product/<%= productSlug %>#reviews" class="btn btn-sm btn-warning text-dark rounded-pill">
+                                        <i class="bi bi-pencil-square me-1"></i>Review <%= (item.productName || item.product.name).substring(0, 15) %><%= (item.productName || item.product.name).length > 15 ? '...' : '' %>
+                                    </a>
+                                    <% } %>
+                                <% }); %>
+                                <% if (order.orderItems.length > 2) { %>
+                                    <span class="badge bg-warning text-dark rounded-pill py-2 px-3">+<%= order.orderItems.length - 2 %> more</span>
+                                <% } %>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
+            </div>
+        <% }); %>
+    <% } %>
+</div>
+
+<style>
+    .review-icon-pulse {
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+    }
+    .review-prompt {
+        border-left: 4px solid #ffc107;
+    }
+</style>
+
+<%- include('../partials/footer') %>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

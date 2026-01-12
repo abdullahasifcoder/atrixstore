@@ -1,0 +1,662 @@
+<nav class="navbar navbar-expand-lg navbar-premium">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            ATRIX<span>.</span>
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/shop">Shop</a>
+                </li>
+                <li class="nav-item mega-dropdown" id="categoriesDropdown">
+                    <a class="nav-link mega-toggle" href="#" role="button" onclick="toggleMegaMenu(event)">
+                        Categories <i class="bi bi-chevron-down ms-1 small mega-chevron"></i>
+                    </a>
+                    <div class="mega-menu" id="megaMenu">
+                        <div class="mega-menu-content">
+                            <div class="mega-menu-grid">
+                                <% if (typeof allCategories !== 'undefined' && allCategories.length > 0) { %>
+                                    <% 
+                                    const parentCats = allCategories.filter(c => !c.parentId);
+                                    const childCats = allCategories.filter(c => c.parentId);
+                                    %>
+                                    <% parentCats.forEach(parent => { %>
+                                    <div class="mega-menu-column">
+                                        <h6 class="mega-menu-heading">
+                                            <a href="/shop?categoryId=<%= parent.id %>"><%= parent.name %></a>
+                                        </h6>
+                                        <ul class="mega-menu-links">
+                                            <% 
+                                            const children = childCats.filter(c => c.parentId === parent.id);
+                                            if (children.length > 0) {
+                                                children.forEach(child => { %>
+                                                    <li><a href="/shop?categoryId=<%= child.id %>"><%= child.name %></a></li>
+                                                <% });
+                                            } %>
+                                            <li><a href="/shop?categoryId=<%= parent.id %>" class="view-all-link">View All <i class="bi bi-arrow-right"></i></a></li>
+                                        </ul>
+                                    </div>
+                                    <% }); %>
+                                <% } %>
+                            </div>
+                            <div class="mega-menu-promo">
+                                <div class="promo-card">
+                                    <div class="promo-content">
+                                        <span class="promo-badge">NEW</span>
+                                        <h5>Summer Collection</h5>
+                                        <p>Up to 40% off on selected items</p>
+                                        <a href="/shop?featured=true" class="promo-btn">Shop Now</a>
+                                    </div>
+                                    <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200" alt="Promo">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+            
+            <!-- Search Form with Live Suggestions -->
+            <div class="search-box d-none d-lg-block me-3 position-relative">
+                <i class="bi bi-search search-icon"></i>
+                <form action="/shop" method="GET" id="searchForm" autocomplete="off">
+                    <input type="search" name="search" id="searchInput" placeholder="Search products..." aria-label="Search">
+                </form>
+                <div class="search-suggestions" id="searchSuggestions"></div>
+            </div>
+
+            <ul class="navbar-nav align-items-center gap-2">
+                <% if (user) { %>
+                    <li class="nav-item">
+                        <a class="nav-icon-btn" href="/messages" title="My Messages">
+                            <i class="bi bi-bell"></i>
+                            <span class="badge-count notification-badge" id="messageCount" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-icon-btn" href="/wishlist" title="My Wishlist">
+                            <i class="bi bi-heart"></i>
+                            <span class="badge-count" id="wishlistCount" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-icon-btn" href="/cart" title="Shopping Cart">
+                            <i class="bi bi-bag"></i>
+                            <span class="badge-count" id="cartCount">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-icon-btn dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" style="width: auto; padding: 0.5rem 1rem; border-radius: 50px;">
+                            <i class="bi bi-person me-1"></i>
+                            <span class="d-none d-md-inline"><%= user.firstName %></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/profile"><i class="bi bi-person-circle me-2"></i>My Profile</a></li>
+                            <li><a class="dropdown-item" href="/orders"><i class="bi bi-box-seam me-2"></i>My Orders</a></li>
+                            <li><a class="dropdown-item" href="/messages"><i class="bi bi-bell me-2"></i>My Messages <span class="badge bg-danger ms-1" id="dropdownMessageCount" style="display: none;">0</span></a></li>
+                            <li><a class="dropdown-item" href="/wishlist"><i class="bi bi-heart me-2"></i>My Wishlist</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="logout()"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        </ul>
+                    </li>
+                <% } else { %>
+                    <li class="nav-item">
+                        <a href="/login" class="btn-premium btn-dark-premium" style="padding: 0.5rem 1.25rem; font-size: 0.875rem;">
+                            Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/register" class="btn-premium btn-primary-premium" style="padding: 0.5rem 1.25rem; font-size: 0.875rem;">
+                            Register
+                        </a>
+                    </li>
+                <% } %>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<script>
+function logout() {
+    fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+    })
+    .then(() => {
+        window.location.href = '/';
+    });
+}
+
+// Update cart count
+async function updateCartCount() {
+    try {
+        const response = await fetch('/api/cart', { credentials: 'include' });
+        const data = await response.json();
+        if (data.success && data.cart.items) {
+            const count = data.cart.items.reduce((sum, item) => sum + item.quantity, 0);
+            const badge = document.getElementById('cartCount');
+            if (badge) {
+                badge.textContent = count;
+                badge.style.display = count > 0 ? 'flex' : 'none';
+            }
+        }
+    } catch (error) {
+        console.log('Cart count not available');
+    }
+}
+
+// Update wishlist count
+async function updateWishlistCount() {
+    try {
+        const response = await fetch('/api/wishlist/count', { credentials: 'include' });
+        const data = await response.json();
+        if (data.success) {
+            const badge = document.getElementById('wishlistCount');
+            if (badge) {
+                badge.textContent = data.count;
+                badge.style.display = data.count > 0 ? 'flex' : 'none';
+            }
+        }
+    } catch (error) {
+        console.log('Wishlist count not available');
+    }
+}
+
+// Update message/notification count
+async function updateMessageCount() {
+    try {
+        const response = await fetch('/api/messages/unread-count', { credentials: 'include' });
+        const data = await response.json();
+        if (data.success) {
+            const mainBadge = document.getElementById('messageCount');
+            const dropdownBadge = document.getElementById('dropdownMessageCount');
+            const count = data.count || 0;
+            
+            if (mainBadge) {
+                mainBadge.textContent = count;
+                mainBadge.style.display = count > 0 ? 'flex' : 'none';
+            }
+            if (dropdownBadge) {
+                dropdownBadge.textContent = count;
+                dropdownBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+            }
+        }
+    } catch (error) {
+        console.log('Message count not available');
+    }
+}
+
+// Toggle wishlist for product
+async function toggleWishlist(productId, button) {
+    try {
+        const response = await fetch('/api/wishlist/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ productId })
+        });
+        const data = await response.json();
+        if (data.success) {
+            if (button) {
+                const icon = button.querySelector('i');
+                if (data.action === 'added') {
+                    icon.classList.remove('bi-heart');
+                    icon.classList.add('bi-heart-fill');
+                    button.classList.add('active');
+                } else {
+                    icon.classList.remove('bi-heart-fill');
+                    icon.classList.add('bi-heart');
+                    button.classList.remove('active');
+                }
+            }
+            updateWishlistCount();
+            showToast(data.message, 'success');
+        } else {
+            showToast(data.message || 'Error updating wishlist', 'error');
+        }
+    } catch (error) {
+        showToast('Please login to add items to wishlist', 'error');
+    }
+}
+
+// Toast notification
+function showToast(message, type = 'success') {
+    // Remove existing toasts
+    document.querySelectorAll('.toast-notification').forEach(t => t.remove());
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.innerHTML = `<i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>${message}`;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#10b981' : '#ef4444'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    updateCartCount();
+    updateWishlistCount();
+    updateMessageCount();
+    initLiveSearch();
+    initMegaMenu();
+});
+
+// Mega Menu Click Toggle
+function initMegaMenu() {
+    // Close mega menu when clicking outside
+    document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('categoriesDropdown');
+        const megaMenu = document.getElementById('megaMenu');
+        if (dropdown && megaMenu && !dropdown.contains(e.target)) {
+            megaMenu.classList.remove('show');
+            dropdown.classList.remove('active');
+        }
+    });
+}
+
+function toggleMegaMenu(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const dropdown = document.getElementById('categoriesDropdown');
+    const megaMenu = document.getElementById('megaMenu');
+    
+    if (megaMenu.classList.contains('show')) {
+        megaMenu.classList.remove('show');
+        dropdown.classList.remove('active');
+    } else {
+        megaMenu.classList.add('show');
+        dropdown.classList.add('active');
+    }
+}
+
+// Live Search functionality
+function initLiveSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const suggestions = document.getElementById('searchSuggestions');
+    if (!searchInput || !suggestions) return;
+
+    let debounceTimer;
+    let selectedIndex = -1;
+
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(debounceTimer);
+        const query = e.target.value.trim();
+        
+        if (query.length < 2) {
+            suggestions.style.display = 'none';
+            return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+            try {
+                const res = await fetch(`/api/products?search=${encodeURIComponent(query)}&limit=5`);
+                const data = await res.json();
+                
+                if (data.success && data.products.length > 0) {
+                    selectedIndex = -1;
+                    suggestions.innerHTML = data.products.map((p, i) => `
+                        <a href="/product/${p.slug}" class="suggestion-item" data-index="${i}">
+                            <img src="${p.imageUrl || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=50'}" alt="${p.name}">
+                            <div class="suggestion-info">
+                                <span class="suggestion-name">${highlightMatch(p.name, query)}</span>
+                                <span class="suggestion-price">$${parseFloat(p.price).toFixed(2)}</span>
+                            </div>
+                            <i class="bi bi-arrow-right-short"></i>
+                        </a>
+                    `).join('') + `
+                        <a href="/shop?search=${encodeURIComponent(query)}" class="suggestion-item suggestion-viewall">
+                            <i class="bi bi-search me-2"></i>
+                            View all results for "${query}"
+                        </a>
+                    `;
+                    suggestions.style.display = 'block';
+                } else {
+                    suggestions.innerHTML = `
+                        <div class="suggestion-empty">
+                            <i class="bi bi-search me-2"></i>No products found
+                        </div>
+                        <a href="/shop?search=${encodeURIComponent(query)}" class="suggestion-item suggestion-viewall">
+                            Search anyway for "${query}"
+                        </a>
+                    `;
+                    suggestions.style.display = 'block';
+                }
+            } catch (err) {
+                suggestions.style.display = 'none';
+            }
+        }, 300);
+    });
+
+    // Keyboard navigation
+    searchInput.addEventListener('keydown', (e) => {
+        const items = suggestions.querySelectorAll('.suggestion-item');
+        if (!items.length) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+            updateSelection(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, -1);
+            updateSelection(items);
+        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+            e.preventDefault();
+            items[selectedIndex].click();
+        } else if (e.key === 'Escape') {
+            suggestions.style.display = 'none';
+        }
+    });
+
+    function updateSelection(items) {
+        items.forEach((item, i) => {
+            item.classList.toggle('selected', i === selectedIndex);
+        });
+    }
+
+    function highlightMatch(text, query) {
+        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        return text.replace(regex, '<strong>$1</strong>');
+    }
+
+    // Close suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-box')) {
+            suggestions.style.display = 'none';
+        }
+    });
+}
+</script>
+<style>
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+/* Live Search Suggestions */
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    display: none;
+    z-index: 1000;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 8px;
+}
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    text-decoration: none;
+    color: #1a1a2e;
+    transition: background 0.2s;
+    border-bottom: 1px solid #f1f5f9;
+}
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+.suggestion-item:hover, .suggestion-item.selected {
+    background: #f8fafc;
+}
+.suggestion-item img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+.suggestion-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.suggestion-name {
+    font-size: 0.9rem;
+}
+.suggestion-name strong {
+    color: var(--accent, #6366f1);
+}
+.suggestion-price {
+    font-size: 0.8rem;
+    color: var(--accent, #6366f1);
+    font-weight: 600;
+}
+.suggestion-viewall {
+    background: #f8fafc;
+    color: var(--accent, #6366f1);
+    font-weight: 500;
+    justify-content: center;
+}
+.suggestion-empty {
+    padding: 16px;
+    text-align: center;
+    color: #94a3b8;
+}
+
+/* Mega Menu Styles */
+.mega-dropdown {
+    position: static;
+}
+
+.mega-dropdown > .nav-link {
+    cursor: pointer;
+}
+
+.mega-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 3px solid var(--accent, #6366f1);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+/* Click-based mega menu - show class instead of hover */
+.mega-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* Chevron rotation when active */
+.mega-dropdown.active .mega-chevron {
+    transform: rotate(180deg);
+}
+
+.mega-chevron {
+    transition: transform 0.3s ease;
+}
+
+.mega-toggle {
+    cursor: pointer;
+}
+
+.mega-menu-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 40px;
+    display: flex;
+    gap: 40px;
+}
+
+.mega-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 30px;
+    flex: 1;
+}
+
+.mega-menu-column h6.mega-menu-heading {
+    margin-bottom: 15px;
+    font-weight: 700;
+    color: #1a1a2e;
+    font-size: 0.95rem;
+}
+
+.mega-menu-heading a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.mega-menu-heading a:hover {
+    color: var(--accent, #6366f1);
+}
+
+.mega-menu-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mega-menu-links li {
+    margin-bottom: 10px;
+}
+
+.mega-menu-links a {
+    color: #64748b;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mega-menu-links a:hover {
+    color: var(--accent, #6366f1);
+    transform: translateX(4px);
+}
+
+.mega-menu-links .view-all-link {
+    color: var(--accent, #6366f1);
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+.mega-menu-promo {
+    width: 280px;
+    flex-shrink: 0;
+}
+
+.promo-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.promo-content {
+    flex: 1;
+}
+
+.promo-badge {
+    background: var(--accent, #6366f1);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.promo-card h5 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 10px 0 5px;
+    color: #1a1a2e;
+}
+
+.promo-card p {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 12px;
+}
+
+.promo-btn {
+    display: inline-block;
+    background: #1a1a2e;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.promo-btn:hover {
+    background: var(--accent, #6366f1);
+    color: white;
+}
+
+.promo-card img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+@media (max-width: 991px) {
+    .mega-menu {
+        position: static;
+        box-shadow: none;
+        border: none;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+    }
+    .mega-menu.show {
+        max-height: 500px;
+        padding: 15px;
+    }
+    .mega-menu-content {
+        flex-direction: column;
+        padding: 0;
+    }
+    .mega-menu-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .mega-menu-promo {
+        width: 100%;
+        display: none;
+    }
+}
+</style>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - ATRIX Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('../partials/navbar', { user }) %>
+
+    <div class="container my-5">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item active">My Wishlist</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 style="font-family: 'Playfair Display', serif;">My Wishlist</h1>
+            <span class="badge bg-dark px-3 py-2 fs-6"><%= wishlistItems.length %> items</span>
+        </div>
+
+        <% if (wishlistItems.length === 0) { %>
+        <!-- Empty Wishlist -->
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-heart display-1 text-muted"></i>
+            </div>
+            <h3 style="font-family: 'Playfair Display', serif;">Your wishlist is empty</h3>
+            <p class="text-muted mb-4">Save items you love by clicking the heart icon on any product.</p>
+            <a href="/shop" class="btn-premium btn-primary-premium">
+                <i class="bi bi-shop me-2"></i>Explore Products
+            </a>
+        </div>
+        <% } else { %>
+        <!-- Wishlist Items -->
+        <div class="row g-4">
+            <% wishlistItems.forEach((item, index) => { %>
+            <div class="col-6 col-md-4 col-lg-3 wishlist-item animate-slide-up" style="animation-delay: <%= index * 50 %>ms" data-product-id="<%= item.product.id %>">
+                <div class="product-card">
+                    <div class="product-card-image">
+                        <img src="<%= item.product.imageUrl || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=500' %>" alt="<%= item.product.name %>">
+                        <% if (item.product.isFeatured) { %>
+                        <span class="product-badge badge-hot">🔥 Hot</span>
+                        <% } %>
+                        <div class="product-actions">
+                            <a href="/product/<%= item.product.slug %>" class="product-action-btn" title="View Product">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <button class="product-action-btn active" title="Remove from Wishlist" onclick="removeFromWishlist(<%= item.product.id %>)">
+                                <i class="bi bi-heart-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card-body">
+                        <span class="product-category"><%= item.product.category?.name || 'General' %></span>
+                        <h5 class="product-title"><%= item.product.name %></h5>
+                        <div class="product-price">
+                            <span class="price-current">$<%= parseFloat(item.product.price).toFixed(2) %></span>
+                            <% if (item.product.stock > 0) { %>
+                                <span class="badge bg-success ms-auto">In Stock</span>
+                            <% } else { %>
+                                <span class="badge bg-danger ms-auto">Out of Stock</span>
+                            <% } %>
+                        </div>
+                        <div class="d-grid gap-2 mt-3">
+                            <% if (item.product.stock > 0) { %>
+                            <button class="add-to-cart-btn" onclick="addToCart(<%= item.product.id %>)">
+                                <i class="bi bi-bag-plus me-2"></i>Add to Cart
+                            </button>
+                            <% } else { %>
+                            <button class="add-to-cart-btn" disabled style="opacity: 0.6;">
+                                <i class="bi bi-x-circle me-2"></i>Out of Stock
+                            </button>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <% }); %>
+        </div>
+
+        <!-- Clear All -->
+        <div class="text-center mt-5">
+            <button class="btn btn-outline-danger" onclick="clearWishlist()">
+                <i class="bi bi-trash me-2"></i>Clear Wishlist
+            </button>
+        </div>
+        <% } %>
+    </div>
+
+    <style>
+    .product-action-btn.active {
+        background: var(--accent, #e94560);
+        color: white;
+    }
+    .product-action-btn.active:hover {
+        background: #d63954;
+    }
+    @keyframes fadeOut {
+        from { opacity: 1; transform: scale(1); }
+        to { opacity: 0; transform: scale(0.8); }
+    }
+    .wishlist-item.removing {
+        animation: fadeOut 0.3s ease forwards;
+    }
+    </style>
+
+    <script>
+    async function removeFromWishlist(productId) {
+        try {
+            const response = await fetch(`/api/wishlist/${productId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                const item = document.querySelector(`.wishlist-item[data-product-id="${productId}"]`);
+                if (item) {
+                    item.classList.add('removing');
+                    setTimeout(() => {
+                        item.remove();
+                        updateWishlistCount();
+                        // Check if wishlist is now empty
+                        const remaining = document.querySelectorAll('.wishlist-item');
+                        if (remaining.length === 0) {
+                            location.reload();
+                        }
+                    }, 300);
+                }
+                showToast('Removed from wishlist', 'success');
+            } else {
+                showToast(data.message || 'Error removing item', 'error');
+            }
+        } catch (error) {
+            showToast('Error removing from wishlist', 'error');
+        }
+    }
+
+    async function addToCart(productId) {
+        try {
+            const response = await fetch('/api/cart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ productId, quantity: 1 })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                showToast('Added to cart!', 'success');
+                if (typeof updateCartCount === 'function') {
+                    updateCartCount();
+                }
+            } else {
+                showToast(data.message || 'Error adding to cart', 'error');
+            }
+        } catch (error) {
+            showToast('Error adding to cart', 'error');
+        }
+    }
+
+    async function clearWishlist() {
+        if (!confirm('Are you sure you want to clear your entire wishlist?')) return;
+
+        const items = document.querySelectorAll('.wishlist-item');
+        for (const item of items) {
+            const productId = item.dataset.productId;
+            await fetch(`/api/wishlist/${productId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+        }
+        location.reload();
+    }
+
+    function updateWishlistCount() {
+        const badge = document.querySelector('.badge.bg-dark');
+        if (badge) {
+            const count = document.querySelectorAll('.wishlist-item').length;
+            badge.textContent = count + ' items';
+        }
+    }
+
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.innerHTML = `<i class="bi ${type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-2"></i>${message}`;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: ${type === 'success' ? '#10b981' : '#ef4444'};
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+    </script>
+
+    <%- include('../partials/footer') %>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

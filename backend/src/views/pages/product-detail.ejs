@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title><%= title %> - ATRIX Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('../partials/navbar', { user }) %>
+
+    <div class="container my-5">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item"><a href="/shop">Shop</a></li>
+                <li class="breadcrumb-item"><a href="/shop?categoryId=<%= product.category?.id %>"><%= product.category?.name %></a></li>
+                <li class="breadcrumb-item active"><%= product.name %></li>
+            </ol>
+        </nav>
+
+        <div class="row g-5">
+            <!-- Product Gallery - Enhanced with Multiple Images -->
+            <div class="col-lg-6">
+                <div class="product-gallery-premium">
+                    <!-- Thumbnails on Left (Desktop) / Top (Mobile) -->
+                    <div class="gallery-thumbnails">
+                        <% 
+                        // Build array of all images
+                        const allImages = [];
+                        if (product.imageUrl) allImages.push(product.imageUrl);
+                        if (product.images && product.images.length > 0) {
+                            product.images.forEach(img => {
+                                if (img && !allImages.includes(img)) allImages.push(img);
+                            });
+                        }
+                        // Add placeholder images if less than 4
+                        const placeholders = [
+                            'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=200',
+                            'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200',
+                            'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200',
+                            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200'
+                        ];
+                        while (allImages.length < 4) {
+                            allImages.push(placeholders[allImages.length] || placeholders[0]);
+                        }
+                        %>
+                        <% allImages.forEach((imgUrl, index) => { %>
+                        <div class="gallery-thumb <%= index === 0 ? 'active' : '' %>" onclick="changeMainImage(this, '<%= imgUrl %>')" data-index="<%= index %>">
+                            <img src="<%= imgUrl %>" alt="<%= product.name %> - Image <%= index + 1 %>" onerror="this.src='https://images.unsplash.com/photo-1560343090-f0409e92791a?w=200'">
+                        </div>
+                        <% }); %>
+                    </div>
+                    
+                    <!-- Main Image Display -->
+                    <div class="gallery-main">
+                        <div class="gallery-main-wrapper">
+                            <img src="<%= allImages[0] || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800' %>" 
+                                 id="mainProductImage" 
+                                 alt="<%= product.name %>"
+                                 onerror="this.src='https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800'">
+                            
+                            <!-- Zoom Icon -->
+                            <button class="gallery-zoom-btn" onclick="openLightbox()">
+                                <i class="bi bi-zoom-in"></i>
+                            </button>
+                            
+                            <!-- Navigation Arrows -->
+                            <button class="gallery-nav gallery-prev" onclick="navigateGallery(-1)">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <button class="gallery-nav gallery-next" onclick="navigateGallery(1)">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Badges -->
+                        <div class="gallery-badges">
+                            <% if (product.isFeatured) { %>
+                            <span class="gallery-badge badge-featured"><i class="bi bi-fire me-1"></i>Hot</span>
+                            <% } %>
+                            <% if (product.comparePrice) { %>
+                            <span class="gallery-badge badge-sale">-<%= Math.round((1 - product.price / product.comparePrice) * 100) %>%</span>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lightbox Modal -->
+                <div class="lightbox-modal" id="imageLightbox" onclick="closeLightbox(event)">
+                    <button class="lightbox-close" onclick="closeLightbox()"><i class="bi bi-x-lg"></i></button>
+                    <button class="lightbox-nav lightbox-prev" onclick="navigateLightbox(event, -1)"><i class="bi bi-chevron-left"></i></button>
+                    <img src="" id="lightboxImage" alt="Product Image">
+                    <button class="lightbox-nav lightbox-next" onclick="navigateLightbox(event, 1)"><i class="bi bi-chevron-right"></i></button>
+                    <div class="lightbox-counter"><span id="lightboxCounter">1</span> / <%= allImages.length %></div>
+                </div>
+                
+                <style>
+                .product-gallery-premium {
+                    display: flex;
+                    gap: 16px;
+                }
+                
+                .gallery-thumbnails {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    width: 80px;
+                }
+                
+                .gallery-thumb {
+                    width: 80px;
+                    height: 80px;
+                    border-radius: 12px;
+                    overflow: hidden;
+                    cursor: pointer;
+                    border: 2px solid transparent;
+                    transition: all 0.3s ease;
+                    opacity: 0.7;
+                }
+                
+                .gallery-thumb:hover, .gallery-thumb.active {
+                    border-color: var(--accent, #6366f1);
+                    opacity: 1;
+                }
+                
+                .gallery-thumb img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+                
+                .gallery-main {
+                    flex: 1;
+                    position: relative;
+                }
+                
+                .gallery-main-wrapper {
+                    position: relative;
+                    border-radius: 20px;
+                    overflow: hidden;
+                    background: #f8fafc;
+                }
+                
+                .gallery-main-wrapper img {
+                    width: 100%;
+                    aspect-ratio: 1;
+                    object-fit: cover;
+                    transition: transform 0.3s ease;
+                }
+                
+                .gallery-main-wrapper:hover img {
+                    transform: scale(1.02);
+                }
+                
+                .gallery-zoom-btn {
+                    position: absolute;
+                    top: 16px;
+                    right: 16px;
+                    width: 44px;
+                    height: 44px;
+                    background: white;
+                    border: none;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.2rem;
+                    transition: all 0.3s ease;
+                    opacity: 0;
+                }
+                
+                .gallery-main-wrapper:hover .gallery-zoom-btn {
+                    opacity: 1;
+                }
+                
+                .gallery-zoom-btn:hover {
+                    background: var(--accent, #6366f1);
+                    color: white;
+                }
+                
+                .gallery-nav {
+                    position: absolute;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 44px;
+                    height: 44px;
+                    background: white;
+                    border: none;
+                    border-radius: 50%;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.2rem;
+                    transition: all 0.3s ease;
+                    opacity: 0;
+                }
+                
+                .gallery-main-wrapper:hover .gallery-nav {
+                    opacity: 1;
+                }
+                
+                .gallery-prev { left: 16px; }
+                .gallery-next { right: 16px; }
+                
+                .gallery-nav:hover {
+                    background: var(--accent, #6366f1);
+                    color: white;
+                }
+                
+                .gallery-badges {
+                    position: absolute;
+                    top: 16px;
+                    left: 16px;
+                    display: flex;
+                    gap: 8px;
+                    flex-direction: column;
+                }
+                
+                .gallery-badge {
+                    padding: 6px 12px;
+                    border-radius: 8px;
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                }
+                
+                .badge-featured {
+                    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+                    color: white;
+                }
+                
+                .badge-sale {
+                    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                    color: white;
+                }
+                
+                /* Lightbox Styles */
+                .lightbox-modal {
+                    display: none;
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(0,0,0,0.95);
+                    z-index: 9999;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .lightbox-modal.active {
+                    display: flex;
+                }
+                
+                .lightbox-modal img {
+                    max-width: 90%;
+                    max-height: 85vh;
+                    object-fit: contain;
+                    border-radius: 8px;
+                }
+                
+                .lightbox-close {
+                    position: absolute;
+                    top: 20px;
+                    right: 20px;
+                    width: 50px;
+                    height: 50px;
+                    background: rgba(255,255,255,0.1);
+                    border: none;
+                    border-radius: 50%;
+                    color: white;
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    transition: background 0.3s;
+                }
+                
+                .lightbox-close:hover {
+                    background: rgba(255,255,255,0.2);
+                }
+                
+                .lightbox-nav {
+                    position: absolute;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 60px;
+                    height: 60px;
+                    background: rgba(255,255,255,0.1);
+                    border: none;
+                    border-radius: 50%;
+                    color: white;
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    transition: background 0.3s;
+                }
+                
+                .lightbox-nav:hover {
+                    background: rgba(255,255,255,0.2);
+                }
+                
+                .lightbox-prev { left: 30px; }
+                .lightbox-next { right: 30px; }
+                
+                .lightbox-counter {
+                    position: absolute;
+                    bottom: 30px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    color: white;
+                    font-size: 0.9rem;
+                    background: rgba(0,0,0,0.5);
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                }
+                
+                @media (max-width: 768px) {
+                    .product-gallery-premium {
+                        flex-direction: column-reverse;
+                    }
+                    .gallery-thumbnails {
+                        flex-direction: row;
+                        width: 100%;
+                        overflow-x: auto;
+                        padding-bottom: 8px;
+                    }
+                    .gallery-thumb {
+                        flex-shrink: 0;
+                        width: 70px;
+                        height: 70px;
+                    }
+                }
+                </style>
+            </div>
+
+            <!-- Product Info -->
+            <div class="col-lg-6">
+                <div class="product-info">
+                    <span class="product-category d-inline-block mb-3"><%= product.category?.name || 'General' %></span>
+                    <h1 class="mb-3" style="font-family: 'Playfair Display', serif;"><%= product.name %></h1>
+                    
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="product-rating">
+                            <span class="stars text-warning">
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-fill"></i>
+                                <i class="bi bi-star-half"></i>
+                            </span>
+                            <span class="ms-2 text-muted">(<%= product.salesCount || 0 %> sold)</span>
+                        </div>
+                        <span class="text-muted">|</span>
+                        <span class="text-muted"><%= product.viewCount || 0 %> views</span>
+                    </div>
+
+                    <div class="mb-4">
+                        <span class="h2 fw-bold" style="color: var(--accent);">$<%= parseFloat(product.price).toFixed(2) %></span>
+                        <% if (product.comparePrice) { %>
+                        <span class="h5 text-muted text-decoration-line-through ms-2">$<%= parseFloat(product.comparePrice).toFixed(2) %></span>
+                        <span class="badge bg-danger ms-2">SAVE <%= Math.round((1 - product.price / product.comparePrice) * 100) %>%</span>
+                        <% } %>
+                    </div>
+                    
+                    <% if (product.stock > 0) { %>
+                        <div class="alert alert-success-premium d-inline-flex align-items-center mb-4">
+                            <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+                            <div>
+                                <strong>In Stock</strong>
+                                <span class="text-muted ms-2">(<%= product.stock %> available)</span>
+                            </div>
+                        </div>
+                    <% } else { %>
+                        <div class="alert alert-error-premium d-inline-flex align-items-center mb-4">
+                            <i class="bi bi-x-circle-fill me-2 fs-5"></i>
+                            <strong>Out of Stock</strong>
+                        </div>
+                    <% } %>
+
+                    <p class="lead text-muted mb-4"><%= product.shortDescription %></p>
+                    
+                    <% if (user && product.stock > 0) { %>
+                    <form onsubmit="addToCart(event, <%= product.id %>)" class="mb-4">
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <label class="fw-semibold">Quantity:</label>
+                            <div class="quantity-selector d-flex align-items-center">
+                                <button type="button" class="qty-btn" onclick="decrementQty()">−</button>
+                                <input type="number" class="qty-input" id="quantity" value="1" min="1" max="<%= product.stock %>" readonly>
+                                <button type="button" class="qty-btn" onclick="incrementQty(<%= product.stock %>)">+</button>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-3 flex-wrap">
+                            <button type="submit" class="btn-premium btn-primary-premium flex-grow-1">
+                                <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                            </button>
+                            <button type="button" class="btn-premium btn-dark-premium wishlist-btn-detail" onclick="toggleWishlist(<%= product.id %>, this)" data-product-id="<%= product.id %>">
+                                <i class="bi bi-heart"></i>
+                            </button>
+                        </div>
+                    </form>
+                    <% } else if (!user) { %>
+                        <a href="/login" class="btn-premium btn-primary-premium">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Login to Purchase
+                        </a>
+                    <% } %>
+
+                    <hr class="my-4">
+
+                    <!-- Product Details -->
+                    <div class="mb-4">
+                        <h5 class="fw-bold mb-3">Description</h5>
+                        <p class="text-muted"><%= product.description %></p>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="bg-light rounded-3 p-3">
+                                <small class="text-muted d-block">SKU</small>
+                                <strong><%= product.sku %></strong>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-light rounded-3 p-3">
+                                <small class="text-muted d-block">Category</small>
+                                <strong><%= product.category?.name %></strong>
+                            </div>
+                        </div>
+                        <% if (product.weight) { %>
+                        <div class="col-6">
+                            <div class="bg-light rounded-3 p-3">
+                                <small class="text-muted d-block">Weight</small>
+                                <strong><%= product.weight %> kg</strong>
+                            </div>
+                        </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Trust Badges -->
+                    <div class="d-flex gap-4 mt-4 pt-4 border-top flex-wrap">
+                        <div class="d-flex align-items-center gap-2 text-muted">
+                            <i class="bi bi-truck fs-4"></i>
+                            <small>Free Shipping</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 text-muted">
+                            <i class="bi bi-shield-check fs-4"></i>
+                            <small>Secure Checkout</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 text-muted">
+                            <i class="bi bi-arrow-clockwise fs-4"></i>
+                            <small>30-Day Returns</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <section class="mt-5 pt-5 border-top" id="reviews">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <div class="bg-light rounded-4 p-4">
+                        <h4 class="mb-4" style="font-family: 'Playfair Display', serif;">Customer Reviews</h4>
+                        <div id="reviewStats">
+                            <div class="text-center mb-4">
+                                <div class="display-4 fw-bold" style="color: var(--accent);" id="avgRating">0.0</div>
+                                <div class="text-warning mb-2" id="avgStars">
+                                    <i class="bi bi-star"></i>
+                                    <i class="bi bi-star"></i>
+                                    <i class="bi bi-star"></i>
+                                    <i class="bi bi-star"></i>
+                                    <i class="bi bi-star"></i>
+                                </div>
+                                <p class="text-muted mb-0"><span id="totalReviews">0</span> reviews</p>
+                            </div>
+                            <div id="ratingBars">
+                                <% [5, 4, 3, 2, 1].forEach(rating => { %>
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="small text-nowrap" style="width: 50px;"><%= rating %> star</span>
+                                    <div class="progress flex-grow-1" style="height: 8px;">
+                                        <div class="progress-bar bg-warning" id="bar<%= rating %>" style="width: 0%"></div>
+                                    </div>
+                                    <span class="small text-muted" style="width: 30px;" id="count<%= rating %>">0</span>
+                                </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                        <% if (user) { %>
+                        <hr class="my-4">
+                        <div id="writeReviewSection">
+                            <button class="btn-premium btn-primary-premium w-100" onclick="showReviewForm()">
+                                <i class="bi bi-pencil me-2"></i>Write a Review
+                            </button>
+                        </div>
+                        <% } else { %>
+                        <hr class="my-4">
+                        <a href="/login" class="btn-premium btn-dark-premium w-100 text-center d-block">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Login to Review
+                        </a>
+                        <% } %>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <!-- Review Form (Hidden by default) -->
+                    <div id="reviewForm" style="display: none;" class="bg-white border rounded-4 p-4 mb-4">
+                        <h5 class="mb-3">Write Your Review</h5>
+                        <div id="reviewFormMessage"></div>
+                        <form onsubmit="submitReview(event)">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Rating *</label>
+                                <div class="star-rating-input">
+                                    <% for (let i = 1; i <= 5; i++) { %>
+                                    <i class="bi bi-star fs-4 star-input" data-rating="<%= i %>" onclick="setRating(<%= i %>)" style="cursor: pointer; color: #ccc;"></i>
+                                    <% } %>
+                                    <input type="hidden" id="ratingInput" name="rating" value="0" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Review Title</label>
+                                <input type="text" class="form-control" id="reviewTitle" placeholder="Summarize your review">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Your Review</label>
+                                <textarea class="form-control" id="reviewComment" rows="4" placeholder="What did you like or dislike?"></textarea>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn-premium btn-primary-premium">Submit Review</button>
+                                <button type="button" class="btn-premium btn-outline-premium" onclick="hideReviewForm()">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Reviews List -->
+                    <div id="reviewsList">
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-chat-square-text display-4 mb-3 d-block"></i>
+                            <p>Loading reviews...</p>
+                        </div>
+                    </div>
+                    <div id="loadMoreReviews" style="display: none;" class="text-center mt-4">
+                        <button class="btn-premium btn-outline-premium" onclick="loadMoreReviews()">Load More Reviews</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Related Products -->
+        <% if (relatedProducts && relatedProducts.length > 0) { %>
+        <section class="mt-5 pt-5">
+            <h3 class="mb-4" style="font-family: 'Playfair Display', serif;">You May Also Like</h3>
+            <div class="row g-4">
+                <% relatedProducts.forEach(relProduct => { %>
+                <div class="col-6 col-md-3">
+                    <div class="product-card">
+                        <div class="product-card-image">
+                            <img src="<%= relProduct.imageUrl || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=400' %>" alt="<%= relProduct.name %>">
+                        </div>
+                        <div class="product-card-body">
+                            <h6 class="product-title"><%= relProduct.name %></h6>
+                            <div class="product-price">
+                                <span class="price-current">$<%= parseFloat(relProduct.price).toFixed(2) %></span>
+                            </div>
+                            <a href="/product/<%= relProduct.slug %>" class="add-to-cart-btn">View Details</a>
+                        </div>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+        </section>
+        <% } %>
+    </div>
+
+    <%- include('../partials/footer') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const productId = <%= product.id %>;
+        let currentPage = 1;
+        let hasMoreReviews = false;
+        let selectedRating = 0;
+
+        function incrementQty(max) {
+            const input = document.getElementById('quantity');
+            if (parseInt(input.value) < max) {
+                input.value = parseInt(input.value) + 1;
+            }
+        }
+
+        function decrementQty() {
+            const input = document.getElementById('quantity');
+            if (parseInt(input.value) > 1) {
+                input.value = parseInt(input.value) - 1;
+            }
+        }
+
+        function changeImage(thumbnail, imageUrl) {
+            document.getElementById('mainImage').src = imageUrl;
+            document.querySelectorAll('.product-thumbnail').forEach(t => t.classList.remove('active'));
+            thumbnail.classList.add('active');
+        }
+
+        // Reviews functionality
+        async function loadReviews(page = 1, append = false) {
+            try {
+                const response = await fetch(`/api/reviews/product/${productId}?page=${page}&limit=5`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateReviewStats(data.stats);
+                    renderReviews(data.reviews, append);
+                    hasMoreReviews = data.pagination.hasMore;
+                    currentPage = data.pagination.current;
+                    document.getElementById('loadMoreReviews').style.display = hasMoreReviews ? 'block' : 'none';
+                }
+            } catch (error) {
+                document.getElementById('reviewsList').innerHTML = '<p class="text-center text-muted py-4">Unable to load reviews</p>';
+            }
+        }
+
+        function updateReviewStats(stats) {
+            document.getElementById('avgRating').textContent = stats.average;
+            document.getElementById('totalReviews').textContent = stats.total;
+            
+            // Update stars
+            const avgStars = document.getElementById('avgStars');
+            const rating = parseFloat(stats.average);
+            avgStars.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= Math.floor(rating)) {
+                    avgStars.innerHTML += '<i class="bi bi-star-fill"></i>';
+                } else if (i - 0.5 <= rating) {
+                    avgStars.innerHTML += '<i class="bi bi-star-half"></i>';
+                } else {
+                    avgStars.innerHTML += '<i class="bi bi-star"></i>';
+                }
+            }
+            
+            // Update rating bars
+            for (let r = 1; r <= 5; r++) {
+                const count = stats.distribution[r] || 0;
+                const percent = stats.total > 0 ? (count / stats.total) * 100 : 0;
+                document.getElementById(`bar${r}`).style.width = `${percent}%`;
+                document.getElementById(`count${r}`).textContent = count;
+            }
+        }
+
+        function renderReviews(reviews, append = false) {
+            const container = document.getElementById('reviewsList');
+            
+            if (reviews.length === 0 && !append) {
+                container.innerHTML = `
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-chat-square display-4 mb-3 d-block"></i>
+                        <p class="mb-0">No reviews yet. Be the first to review!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const reviewsHtml = reviews.map(review => `
+                <div class="border-bottom py-4">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <div class="text-warning mb-1">
+                                ${'<i class="bi bi-star-fill"></i>'.repeat(review.rating)}${'<i class="bi bi-star"></i>'.repeat(5 - review.rating)}
+                            </div>
+                            ${review.title ? `<h6 class="mb-0">${review.title}</h6>` : ''}
+                        </div>
+                        ${review.isVerifiedPurchase ? '<span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle me-1"></i>Verified Purchase</span>' : ''}
+                    </div>
+                    ${review.comment ? `<p class="text-muted mb-2">${review.comment}</p>` : ''}
+                    <div class="d-flex align-items-center gap-3 text-muted small">
+                        <span><strong>${review.user.name}</strong></span>
+                        <span>•</span>
+                        <span>${new Date(review.createdAt).toLocaleDateString()}</span>
+                        <button class="btn btn-sm btn-link text-muted p-0" onclick="markHelpful(${review.id}, this)">
+                            <i class="bi bi-hand-thumbs-up me-1"></i>Helpful (${review.helpfulCount})
+                        </button>
+                    </div>
+                    ${review.adminResponse ? `
+                        <div class="bg-light rounded p-3 mt-3">
+                            <small class="text-muted d-block mb-1"><i class="bi bi-shop me-1"></i>Seller Response</small>
+                            <p class="mb-0 small">${review.adminResponse}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+            
+            if (append) {
+                container.innerHTML += reviewsHtml;
+            } else {
+                container.innerHTML = reviewsHtml;
+            }
+        }
+
+        function loadMoreReviews() {
+            loadReviews(currentPage + 1, true);
+        }
+
+        function setRating(rating) {
+            selectedRating = rating;
+            document.getElementById('ratingInput').value = rating;
+            document.querySelectorAll('.star-input').forEach((star, index) => {
+                star.classList.toggle('bi-star-fill', index < rating);
+                star.classList.toggle('bi-star', index >= rating);
+                star.style.color = index < rating ? '#ffc107' : '#ccc';
+            });
+        }
+
+        function showReviewForm() {
+            document.getElementById('reviewForm').style.display = 'block';
+            document.getElementById('writeReviewSection').style.display = 'none';
+        }
+
+        function hideReviewForm() {
+            document.getElementById('reviewForm').style.display = 'none';
+            document.getElementById('writeReviewSection').style.display = 'block';
+        }
+
+        async function submitReview(event) {
+            event.preventDefault();
+            const messageDiv = document.getElementById('reviewFormMessage');
+            
+            if (selectedRating === 0) {
+                messageDiv.innerHTML = '<div class="alert alert-danger">Please select a rating</div>';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/reviews', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        productId,
+                        rating: selectedRating,
+                        title: document.getElementById('reviewTitle').value,
+                        comment: document.getElementById('reviewComment').value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    messageDiv.innerHTML = '<div class="alert alert-success">Review submitted successfully!</div>';
+                    setTimeout(() => {
+                        hideReviewForm();
+                        loadReviews(1);
+                    }, 1500);
+                } else {
+                    messageDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                }
+            } catch (error) {
+                messageDiv.innerHTML = '<div class="alert alert-danger">Error submitting review</div>';
+            }
+        }
+
+        async function markHelpful(reviewId, button) {
+            try {
+                const response = await fetch(`/api/reviews/${reviewId}/helpful`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    button.innerHTML = `<i class="bi bi-hand-thumbs-up-fill me-1"></i>Helpful (${data.helpfulCount})`;
+                    button.disabled = true;
+                }
+            } catch (error) {
+                console.log('Error marking helpful');
+            }
+        }
+
+        // Check if product is in wishlist on load
+        async function checkWishlistStatus() {
+            try {
+                const btn = document.querySelector('.wishlist-btn-detail');
+                if (!btn) return;
+                
+                const productId = btn.dataset.productId;
+                const response = await fetch(`/api/wishlist/check/${productId}`, { credentials: 'include' });
+                const data = await response.json();
+                
+                if (data.success && data.inWishlist) {
+                    const icon = btn.querySelector('i');
+                    icon.classList.remove('bi-heart');
+                    icon.classList.add('bi-heart-fill');
+                    btn.classList.add('active');
+                }
+            } catch (error) {
+                console.log('Wishlist status check failed');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            checkWishlistStatus();
+            loadReviews(1);
+        });
+
+        // Gallery Functions
+        const galleryImages = [...document.querySelectorAll('.gallery-thumb')].map(t => t.querySelector('img').src);
+        let currentImageIndex = 0;
+
+        function changeMainImage(thumb, imgUrl) {
+            document.getElementById('mainProductImage').src = imgUrl;
+            document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+            thumb.classList.add('active');
+            currentImageIndex = parseInt(thumb.dataset.index);
+        }
+
+        function navigateGallery(direction) {
+            currentImageIndex = (currentImageIndex + direction + galleryImages.length) % galleryImages.length;
+            document.getElementById('mainProductImage').src = galleryImages[currentImageIndex];
+            document.querySelectorAll('.gallery-thumb').forEach((t, i) => {
+                t.classList.toggle('active', i === currentImageIndex);
+            });
+        }
+
+        function openLightbox() {
+            const lightbox = document.getElementById('imageLightbox');
+            document.getElementById('lightboxImage').src = galleryImages[currentImageIndex];
+            document.getElementById('lightboxCounter').textContent = currentImageIndex + 1;
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('imageLightbox').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function navigateLightbox(event, direction) {
+            event.stopPropagation();
+            currentImageIndex = (currentImageIndex + direction + galleryImages.length) % galleryImages.length;
+            document.getElementById('lightboxImage').src = galleryImages[currentImageIndex];
+            document.getElementById('lightboxCounter').textContent = currentImageIndex + 1;
+            document.querySelectorAll('.gallery-thumb').forEach((t, i) => {
+                t.classList.toggle('active', i === currentImageIndex);
+            });
+            document.getElementById('mainProductImage').src = galleryImages[currentImageIndex];
+        }
+
+        // Keyboard navigation for lightbox
+        document.addEventListener('keydown', (e) => {
+            const lightbox = document.getElementById('imageLightbox');
+            if (!lightbox.classList.contains('active')) return;
+            
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowLeft') navigateLightbox({ stopPropagation: () => {} }, -1);
+            if (e.key === 'ArrowRight') navigateLightbox({ stopPropagation: () => {} }, 1);
+        });
+
+        function addToCart(event, productId) {
+            event.preventDefault();
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const btn = event.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding...';
+            btn.disabled = true;
+
+            fetch('/api/cart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ productId, quantity })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Added!';
+                    btn.classList.remove('btn-primary-premium');
+                    btn.classList.add('btn-gold');
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.classList.remove('btn-gold');
+                        btn.classList.add('btn-primary-premium');
+                        btn.disabled = false;
+                    }, 2000);
+                    // Update cart count in navbar
+                    if (typeof updateCartCount === 'function') updateCartCount();
+                } else {
+                    alert(data.message || 'Failed to add to cart');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                alert('Error adding to cart');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>

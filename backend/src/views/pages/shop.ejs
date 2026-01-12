@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - ATRIX Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('../partials/navbar', { user }) %>
+
+    <!-- Shop Header -->
+    <section class="shop-header">
+        <div class="container">
+            <h1 class="display-5 mb-3">Our Collection</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb justify-content-center mb-0">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Shop</li>
+                </ol>
+            </nav>
+        </div>
+    </section>
+
+    <div class="container my-5">
+        <div class="row">
+            <!-- Filters Sidebar -->
+            <div class="col-lg-3 mb-4 mb-lg-0">
+                <div class="filter-sidebar sticky-top" style="top: 100px;">
+                    <h5 class="filter-title">
+                        <i class="bi bi-funnel"></i> Filters
+                    </h5>
+                    <form action="/shop" method="GET" id="filterForm">
+                        <!-- Category Filter -->
+                        <div class="filter-section">
+                            <label class="filter-label">Category</label>
+                            <select name="categoryId" class="form-select form-control-premium" onchange="this.form.submit()">
+                                <option value="">All Categories</option>
+                                <% categories.forEach(cat => { %>
+                                    <option value="<%= cat.id %>" <%= filters.categoryId == cat.id ? 'selected' : '' %>>
+                                        <%= cat.name %>
+                                    </option>
+                                <% }); %>
+                            </select>
+                        </div>
+
+                        <!-- Price Range -->
+                        <div class="filter-section">
+                            <label class="filter-label">Price Range</label>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="number" name="minPrice" class="form-control form-control-premium" placeholder="Min" value="<%= filters.minPrice || '' %>">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" name="maxPrice" class="form-control form-control-premium" placeholder="Max" value="<%= filters.maxPrice || '' %>">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Search -->
+                        <div class="filter-section">
+                            <label class="filter-label">Search</label>
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control form-control-premium" placeholder="Search products..." value="<%= filters.search || '' %>">
+                                <button class="btn btn-dark" type="submit">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-premium btn-primary-premium w-100 mb-2">
+                            Apply Filters
+                        </button>
+                        <a href="/shop" class="btn btn-outline-secondary w-100">
+                            Clear All
+                        </a>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="col-lg-9">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                    <div>
+                        <h4 class="mb-1" style="font-family: 'Playfair Display', serif;">Products</h4>
+                        <p class="text-muted mb-0"><%= pagination.total %> products found</p>
+                        <% if (typeof searchInfo !== 'undefined' && searchInfo && searchInfo.type === 'hybrid' && filters.search) { %>
+                        <small class="text-success">
+                            <i class="bi bi-magic"></i> Smart search active - showing related products
+                        </small>
+                        <% } %>
+                    </div>
+                    <form action="/shop" method="GET" class="d-flex align-items-center gap-2">
+                        <input type="hidden" name="categoryId" value="<%= filters.categoryId || '' %>">
+                        <input type="hidden" name="search" value="<%= filters.search || '' %>">
+                        <label class="text-muted">Sort by:</label>
+                        <select name="sortBy" class="form-select form-control-premium" style="width: auto;" onchange="this.form.submit()">
+                            <option value="createdAt" <%= filters.sortBy === 'createdAt' ? 'selected' : '' %>>Newest</option>
+                            <option value="price" <%= filters.sortBy === 'price' ? 'selected' : '' %>>Price</option>
+                            <option value="salesCount" <%= filters.sortBy === 'salesCount' ? 'selected' : '' %>>Popular</option>
+                            <option value="name" <%= filters.sortBy === 'name' ? 'selected' : '' %>>Name</option>
+                        </select>
+                    </form>
+                </div>
+
+                <% if (products.length === 0) { %>
+                <div class="text-center py-5">
+                    <i class="bi bi-search display-1 text-muted mb-3"></i>
+                    <h4>No products found</h4>
+                    <p class="text-muted">Try adjusting your filters or search terms</p>
+                    <a href="/shop" class="btn-premium btn-primary-premium">View All Products</a>
+                </div>
+                <% } else { %>
+                <div class="row g-4">
+                    <% products.forEach((product, index) => { %>
+                    <div class="col-6 col-md-4 animate-slide-up" style="animation-delay: <%= index * 50 %>ms">
+                        <div class="product-card">
+                            <div class="product-card-image">
+                                <img src="<%= product.imageUrl || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=500' %>" alt="<%= product.name %>">
+                                <% if (product.isFeatured) { %>
+                                <span class="product-badge badge-hot">🔥 Hot</span>
+                                <% } else if (product.stock < 10 && product.stock > 0) { %>
+                                <span class="product-badge badge-sale">Low Stock</span>
+                                <% } %>
+                                <div class="product-actions">
+                                    <a href="/product/<%= product.slug %>" class="product-action-btn" title="Quick View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <button class="product-action-btn wishlist-btn" title="Add to Wishlist" onclick="toggleWishlist(<%= product.id %>, this)" data-product-id="<%= product.id %>">
+                                        <i class="bi bi-heart"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="product-card-body">
+                                <span class="product-category"><%= product.category?.name || 'General' %></span>
+                                <h5 class="product-title"><%= product.name %></h5>
+                                <div class="product-rating">
+                                    <span class="stars">
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-half"></i>
+                                    </span>
+                                    <span class="count">(<%= product.salesCount || 0 %>)</span>
+                                </div>
+                                <div class="product-price">
+                                    <span class="price-current">$<%= parseFloat(product.price).toFixed(2) %></span>
+                                    <% if (product.stock > 0) { %>
+                                        <span class="badge bg-success ms-auto">In Stock</span>
+                                    <% } else { %>
+                                        <span class="badge bg-danger ms-auto">Out of Stock</span>
+                                    <% } %>
+                                </div>
+                                <a href="/product/<%= product.slug %>" class="add-to-cart-btn">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <% }); %>
+                </div>
+                <% } %>
+
+                <!-- Pagination -->
+                <% if (pagination.pages > 1) { %>
+                <nav class="mt-5">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
+                            <a class="page-link" href="/shop?page=<%= pagination.page - 1 %>&categoryId=<%= filters.categoryId || '' %>&search=<%= filters.search || '' %>&sortBy=<%= filters.sortBy || '' %>">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                        <% for (let i = 1; i <= pagination.pages; i++) { %>
+                            <% if (i === 1 || i === pagination.pages || (i >= pagination.page - 2 && i <= pagination.page + 2)) { %>
+                            <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
+                                <a class="page-link" href="/shop?page=<%= i %>&categoryId=<%= filters.categoryId || '' %>&search=<%= filters.search || '' %>&sortBy=<%= filters.sortBy || '' %>"><%= i %></a>
+                            </li>
+                            <% } else if (i === pagination.page - 3 || i === pagination.page + 3) { %>
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                            <% } %>
+                        <% } %>
+                        <li class="page-item <%= pagination.page === pagination.pages ? 'disabled' : '' %>">
+                            <a class="page-link" href="/shop?page=<%= pagination.page + 1 %>&categoryId=<%= filters.categoryId || '' %>&search=<%= filters.search || '' %>&sortBy=<%= filters.sortBy || '' %>">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
