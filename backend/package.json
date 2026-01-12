@@ -10,7 +10,9 @@
     "migrate:undo": "sequelize-cli db:migrate:undo",
     "seed": "sequelize-cli db:seed:all",
     "seed:undo": "sequelize-cli db:seed:undo:all",
-    "db:reset": "sequelize-cli db:migrate:undo:all && sequelize-cli db:migrate && sequelize-cli db:seed:all"
+    "seed:guarantee": "sequelize-cli db:seed --seed 20231213000012-guarantee-category-products.js",
+    "db:reset": "node -e \"if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_DB_RESET) { console.error('❌ DB reset blocked in production. Set ALLOW_DB_RESET=true to override.'); process.exit(1); }\" && sequelize-cli db:migrate:undo:all && sequelize-cli db:migrate && sequelize-cli db:seed:all",
+    "db:reset:dev": "node -e \"if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_DB_RESET) { console.error('❌ DB reset blocked in production. Set ALLOW_DB_RESET=true to override.'); process.exit(1); }\" && sequelize-cli db:migrate:undo:all && sequelize-cli db:migrate && sequelize-cli db:seed:all"
   },
   "keywords": ["ecommerce", "nodejs", "express", "postgresql", "sequelize", "stripe"],
   "author": "Your Team",
