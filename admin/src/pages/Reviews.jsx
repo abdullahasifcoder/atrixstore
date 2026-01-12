@@ -25,7 +25,7 @@ const Reviews = () => {
       if (filter.status !== 'all') params.append('status', filter.status);
       if (filter.rating !== 'all') params.append('rating', filter.rating);
       
-      const res = await axios.get(`/admin/reviews?${params.toString()}`);
+      const res = await axios.get(`/api/admin/reviews?${params.toString()}`);
       setReviews(res.data.reviews || []);
       setPagination(prev => ({
         ...prev,
@@ -40,7 +40,7 @@ const Reviews = () => {
 
   const handleStatusChange = async (reviewId, isApproved) => {
     try {
-      await axios.put(`/admin/reviews/${reviewId}`, { isApproved });
+      await axios.put(`/api/admin/reviews/${reviewId}`, { isApproved });
       fetchReviews();
     } catch (error) {
       console.error('Failed to update review:', error);
@@ -50,7 +50,7 @@ const Reviews = () => {
   const handleDelete = async (reviewId) => {
     if (!window.confirm('Are you sure you want to delete this review?')) return;
     try {
-      await axios.delete(`/admin/reviews/${reviewId}`);
+      await axios.delete(`/api/admin/reviews/${reviewId}`);
       fetchReviews();
       setShowModal(false);
     } catch (error) {
@@ -61,7 +61,7 @@ const Reviews = () => {
   const handleAdminResponse = async () => {
     if (!selectedReview || !adminResponse.trim()) return;
     try {
-      await axios.put(`/admin/reviews/${selectedReview.id}`, { 
+      await axios.put(`/api/admin/reviews/${selectedReview.id}`, { 
         adminResponse: adminResponse.trim() 
       });
       fetchReviews();

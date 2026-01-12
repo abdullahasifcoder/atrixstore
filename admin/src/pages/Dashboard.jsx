@@ -85,7 +85,7 @@ const Dashboard = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get('/admin/dashboard/stats');
+      const response = await api.get('/api/admin/dashboard/stats');
       setStats(response.data.stats);
     } catch (error) {
       console.error('Error fetching stats:', error);

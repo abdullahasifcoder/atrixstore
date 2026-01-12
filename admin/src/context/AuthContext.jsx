@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
 
   const verifyAuth = async () => {
     try {
-      const response = await api.get('/admin/auth/me');
+      const response = await api.get('/api/admin/auth/me');
       if (response.data.success) {
         setAdmin(response.data.admin);
         localStorage.setItem('admin', JSON.stringify(response.data.admin));
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await api.post('/admin/auth/login', { email, password });
+      const response = await api.post('/api/admin/auth/login', { email, password });
       if (response.data.success) {
         setAdmin(response.data.admin);
         localStorage.setItem('admin', JSON.stringify(response.data.admin));
@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await api.post('/admin/auth/logout');
+      await api.post('/api/admin/auth/logout');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {

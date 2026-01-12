@@ -37,7 +37,7 @@ const Orders = () => {
   const fetchOrders = async () => {
     try {
       setError(null);
-      const response = await api.get('/admin/orders?limit=1000');
+      const response = await api.get('/api/admin/orders?limit=1000');
       setOrders(response.data.orders || []);
       setFilteredOrders(response.data.orders || []);
     } catch (error) {
@@ -50,7 +50,7 @@ const Orders = () => {
 
   const handleStatusUpdate = async (orderId, newStatus) => {
     try {
-      await api.put(`/admin/orders/${orderId}/status`, { status: newStatus });
+      await api.put(`/api/admin/orders/${orderId}/status`, { status: newStatus });
       fetchOrders();
     } catch (error) {
       alert('Error updating order status');

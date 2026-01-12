@@ -69,7 +69,7 @@ const Products = () => {
   const fetchProducts = async () => {
     try {
       setError(null);
-      const response = await api.get('/admin/products?limit=100');
+      const response = await api.get('/api/admin/products?limit=100');
       setProducts(response.data.products || []);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -81,7 +81,7 @@ const Products = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await api.get('/admin/categories');
+      const response = await api.get('/api/admin/categories');
       setCategories(response.data.categories || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -95,7 +95,7 @@ const Products = () => {
         await api.put(`/admin/products/${editingProduct.id}`, formData);
         alert('Product updated successfully');
       } else {
-        await api.post('/admin/products', formData);
+        await api.post('/api/admin/products', formData);
         alert('Product created successfully');
       }
       setIsModalOpen(false);
@@ -109,7 +109,7 @@ const Products = () => {
   const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this product?')) {
       try {
-        await api.delete(`/admin/products/${id}`);
+        await api.delete(`/api/admin/products/${id}`);
         alert('Product deleted successfully');
         fetchProducts();
       } catch (error) {

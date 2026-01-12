@@ -23,7 +23,7 @@ const Categories = () => {
   const fetchCategories = async () => {
     try {
       setError(null);
-      const response = await api.get('/admin/categories');
+      const response = await api.get('/api/admin/categories');
       setCategories(response.data.categories || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -40,7 +40,7 @@ const Categories = () => {
         await api.put(`/admin/categories/${editingCategory.id}`, formData);
         alert('Category updated successfully');
       } else {
-        await api.post('/admin/categories', formData);
+        await api.post('/api/admin/categories', formData);
         alert('Category created successfully');
       }
       setIsModalOpen(false);
@@ -54,7 +54,7 @@ const Categories = () => {
   const handleDelete = async (id) => {
     if (confirm('Are you sure you want to delete this category?')) {
       try {
-        await api.delete(`/admin/categories/${id}`);
+        await api.delete(`/api/admin/categories/${id}`);
         alert('Category deleted successfully');
         fetchCategories();
       } catch (error) {
