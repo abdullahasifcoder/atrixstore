@@ -1,5 +1,6 @@
 const db = require('../models');
 const { asyncHandler } = require('../middleware/error');
+const { getCategoryWithChildren } = require('../utils/hybridSearch');
 
 const getCategories = asyncHandler(async (req, res) => {
 
@@ -46,8 +47,13 @@ const getCategoryById = asyncHandler(async (req, res) => {
     });
   }
 
+  // Count products in this category and all child categories
+  const categoryIds = await getCategoryWithChildren(db, category.id);
   const productCount = await db.Product.count({
-    where: { categoryId: category.id, isActive: true }
+    where: { 
+      categoryId: categoryIds.length === 1 ? categoryIds[0] : { [db.Sequelize.Op.in]: categoryIds },
+      isActive: true 
+    }
   });
 
   res.json({

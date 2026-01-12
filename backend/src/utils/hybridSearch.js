@@ -221,6 +221,28 @@ const generateSemanticKeywords = (product) => {
 };
 
 /**
+ * Get all category IDs including children (for filtering parent categories)
+ * @param {Object} db - Sequelize models
+ * @param {number} categoryId - Parent category ID
+ * @returns {number[]} - Array of category IDs (parent + all children)
+ */
+const getCategoryWithChildren = async (db, categoryId) => {
+  if (!categoryId) return null;
+  
+  const categoryIds = [parseInt(categoryId)];
+  
+  // Get all child categories
+  const children = await db.Category.findAll({
+    where: { parentId: categoryId, isActive: true },
+    attributes: ['id']
+  });
+  
+  children.forEach(child => categoryIds.push(child.id));
+  
+  return categoryIds;
+};
+
+/**
  * Perform hybrid search combining keyword and semantic results
  * @param {Object} options - Search options
  * @returns {Object} - Search results with scores
@@ -246,8 +268,13 @@ const hybridSearch = async (db, options) => {
   if (!includeInactive) {
     where.isActive = true;
   }
+  
+  // Handle category filtering - include child categories if parent is selected
   if (categoryId) {
-    where.categoryId = categoryId;
+    const categoryIds = await getCategoryWithChildren(db, categoryId);
+    if (categoryIds && categoryIds.length > 0) {
+      where.categoryId = categoryIds.length === 1 ? categoryIds[0] : { [Op.in]: categoryIds };
+    }
   }
   if (minPrice || maxPrice) {
     where.price = {};
@@ -398,6 +425,7 @@ module.exports = {
   calculateSemanticScore,
   generateSemanticKeywords,
   hybridSearch,
+  getCategoryWithChildren,
   synonymMap,
   categorySemantics
 };

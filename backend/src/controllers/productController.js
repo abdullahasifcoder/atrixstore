@@ -1,7 +1,7 @@
 const db = require('../models');
 const { asyncHandler } = require('../middleware/error');
 const { Op } = require('sequelize');
-const { hybridSearch, generateSemanticKeywords } = require('../utils/hybridSearch');
+const { hybridSearch, generateSemanticKeywords, getCategoryWithChildren } = require('../utils/hybridSearch');
 
 /**
  * Get products with hybrid search (keyword + semantic)
@@ -53,8 +53,12 @@ const getProducts = asyncHandler(async (req, res) => {
     where.isActive = true;
   }
 
+  // Handle category filtering - include child categories if parent is selected
   if (categoryId) {
-    where.categoryId = categoryId;
+    const categoryIds = await getCategoryWithChildren(db, categoryId);
+    if (categoryIds && categoryIds.length > 0) {
+      where.categoryId = categoryIds.length === 1 ? categoryIds[0] : { [Op.in]: categoryIds };
+    }
   }
 
   if (minPrice || maxPrice) {
