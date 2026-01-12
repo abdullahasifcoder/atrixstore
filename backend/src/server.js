@@ -25,17 +25,29 @@ if (process.env.DEBUG_ORDERS === 'true') {
   console.log('🔍 Detailed order logging enabled');
 }
 
+// CORS Configuration - Allow admin and customer frontends
+const allowedOrigins = [
+  'https://admin.atrixstore.tech',
+  'https://atrixstore.tech',
+  'http://localhost:5174',
+  'http://localhost:5173',
+  'http://localhost:5175',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:5175'
+];
+
 app.use(cors({
-  origin: [
-    process.env.ADMIN_URL || 'http://localhost:5174', 
-    process.env.CUSTOMER_URL || 'http://localhost:3000',
-    'http://localhost:5173',
-    'http://localhost:5175',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:5174',
-    'http://127.0.0.1:5175'
-  ],
-  credentials: true,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // Essential for cookies
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
@@ -124,10 +136,21 @@ app.use('/api/messages', require('./routes/messageRoutes'));
 
 app.use('/', require('./routes/viewRoutes'));
 
+// Health check endpoint for monitoring
 app.get('/health', (req, res) => {
   res.json({
-    success: true,
-    message: 'Server is running',
+    ok: true,
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// API health check
+app.get('/api/health', (req, res) => {
+  res.json({
+    ok: true,
+    uptime: process.uptime(),
     timestamp: new Date().toISOString()
   });
 });

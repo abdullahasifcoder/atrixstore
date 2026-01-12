@@ -1,6 +1,6 @@
 const db = require('../models');
 const { generateAccessToken } = require('../utils/jwt');
-const { COOKIE_OPTIONS } = require('../config/jwt');
+const { ADMIN_COOKIE_OPTIONS } = require('../config/jwt');
 const { asyncHandler } = require('../middleware/error');
 
 const adminLogin = asyncHandler(async (req, res) => {
@@ -35,7 +35,7 @@ const adminLogin = asyncHandler(async (req, res) => {
 
   const token = generateAccessToken({ adminId: admin.id, email: admin.email });
 
-  res.cookie('adminToken', token, COOKIE_OPTIONS);
+  res.cookie('adminToken', token, ADMIN_COOKIE_OPTIONS);
 
   res.json({
     success: true,
@@ -46,7 +46,8 @@ const adminLogin = asyncHandler(async (req, res) => {
 });
 
 const adminLogout = asyncHandler(async (req, res) => {
-  res.clearCookie('adminToken');
+  // Clear cookie with same options as when it was set
+  res.clearCookie('adminToken', ADMIN_COOKIE_OPTIONS);
 
   res.json({
     success: true,

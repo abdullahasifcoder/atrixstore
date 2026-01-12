@@ -1,6 +1,6 @@
 const db = require('../models');
 const { generateAccessToken } = require('../utils/jwt');
-const { COOKIE_OPTIONS } = require('../config/jwt');
+const { CUSTOMER_COOKIE_OPTIONS } = require('../config/jwt');
 const { asyncHandler } = require('../middleware/error');
 const { createWelcomeNotification } = require('./messageController');
 
@@ -32,7 +32,7 @@ const register = asyncHandler(async (req, res) => {
 
   const token = generateAccessToken({ userId: user.id, email: user.email });
 
-  res.cookie('token', token, COOKIE_OPTIONS);
+  res.cookie('token', token, CUSTOMER_COOKIE_OPTIONS);
 
   res.status(201).json({
     success: true,
@@ -74,7 +74,7 @@ const login = asyncHandler(async (req, res) => {
 
   const token = generateAccessToken({ userId: user.id, email: user.email });
 
-  res.cookie('token', token, COOKIE_OPTIONS);
+  res.cookie('token', token, CUSTOMER_COOKIE_OPTIONS);
 
   res.json({
     success: true,
@@ -85,7 +85,8 @@ const login = asyncHandler(async (req, res) => {
 });
 
 const logout = asyncHandler(async (req, res) => {
-  res.clearCookie('token');
+  // Clear cookie with same options as when it was set
+  res.clearCookie('token', CUSTOMER_COOKIE_OPTIONS);
 
   res.json({
     success: true,

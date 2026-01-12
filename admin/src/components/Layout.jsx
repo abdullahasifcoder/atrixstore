@@ -151,7 +151,7 @@ const Layout = () => {
                   </svg>
                   Add Product
                 </button>
-                <a href="http://localhost:3000" target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg text-sm transition-all">
+                <a href={import.meta.env.VITE_CUSTOMER_URL || 'http://localhost:3000'} target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg text-sm transition-all">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
